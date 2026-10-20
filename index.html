@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Интерактивный сборник вопросов</title>
+    <style>
+        /* Базовые стили */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        /* Основной контейнер */
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 700px;
+        }
+
+        /* Заголовок */
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #f0f4f8;
+        }
+
+        .header .icon {
+            font-size: 50px;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 28px;
+            margin-bottom: 12px;
+            line-height: 1.3;
+        }
+
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        /* Меню */
+        .menu {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .menu-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #95a5a6;
+            font-weight: bold;
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        /* Элемент меню (ссылка) */
+        .menu-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 18px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            color: #2c3e50;
+            transition: all 0.2s ease;
+        }
+
+        .menu-item:hover {
+            background-color: #f1f5f9;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .menu-item-content {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .menu-item-icon {
+            font-size: 24px;
+            background-color: #e0f2fe;
+            color: #0284c7;
+            width: 45px;
+            height: 45px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+        }
+
+        .menu-item-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .menu-item-title {
+            font-weight: 600;
+            font-size: 16px;
+            margin-bottom: 4px;
+        }
+
+        .menu-item-desc {
+            font-size: 13px;
+            color: #64748b;
+        }
+
+        .menu-item-arrow {
+            color: #94a3b8;
+            font-size: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .menu-item:hover .menu-item-arrow {
+            transform: translateX(4px);
+            color: #0284c7;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Заголовок -->
+    <div class="header">
+        <div class="icon">📚</div>
+        <h1>Интерактивный сборник вопросов</h1>
+        <p class="subtitle">Полный справочник по Java Core, Spring Framework, базам данных и архитектуре микросервисов с раскрывающимися ответами.</p>
+    </div>
+
+    <!-- Меню файлов -->
+    <div class="menu">
+        <div class="menu-title">Доступные материалы</div>
+
+        <!-- ========================================== -->
+        <!-- КОПИРУЙТЕ БЛОК НИЖЕ, ЧТОБЫ ДОБАВИТЬ НОВЫЙ ФАЙЛ -->
+        <!-- ========================================== -->
+        <a href="interview_summary_qa_001.html" class="menu-item">
+            <div class="menu-item-content">
+                <div class="menu-item-icon">📝</div>
+                <div class="menu-item-text">
+                    <span class="menu-item-title">Сборник №1: Java и Spring</span>
+                    <span class="menu-item-desc">Основные вопросы, коллекции, Stream API, многопоточность и Spring Framework</span>
+                </div>
+            </div>
+            <div class="menu-item-arrow">➔</div>
+        </a>
+        <!-- ========================================== -->
+        <!-- КОНЕЦ БЛОКА ДЛЯ КОПИРОВАНИЯ -->
+        <!-- ========================================== -->
+
+        <!-- Пример, как это будет выглядеть, когда вы добавите второй файл: -->
+        <!--
+        <a href="interview_summary_qa_002.html" class="menu-item">
+            <div class="menu-item-content">
+                <div class="menu-item-icon">☕</div>
+                <div class="menu-item-text">
+                    <span class="menu-item-title">Сборник №2: JPA и Hibernate</span>
+                    <span class="menu-item-desc">Работа с базами данных, транзакции, ORM и кэширование</span>
+                </div>
+            </div>
+            <div class="menu-item-arrow">➔</div>
+        </a>
+        -->
+
+    </div>
+</div>
+
+</body>
+</html>
