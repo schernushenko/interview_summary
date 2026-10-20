@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сборник №2: Kafka, Архитектура, Java Core, Spring</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #2980b9;
+            margin-top: 40px;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        .qa-block {
+            background: #fff;
+            border-left: 4px solid #3498db;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-radius: 4px;
+            transition: box-shadow 0.3s ease;
+        }
+        .qa-block:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .qa-block p {
+            margin: 8px 0;
+        }
+        .question {
+            font-weight: bold;
+            color: #e67e22;
+            font-size: 1.05em;
+        }
+        .answer {
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #d35400;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        pre code {
+            background-color: transparent;
+            color: #f8f8f2;
+            padding: 0;
+        }
+
+        /* Стили для раскрывающихся блоков */
+        details {
+            background-color: #ecf0f1;
+            border: 1px solid #bdc3c7;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-top: 10px;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: #1d6fa5;
+            outline: none;
+            user-select: none;
+            transition: color 0.2s;
+            font-size: 0.95em;
+        }
+        summary:hover {
+            color: #0d4a73;
+        }
+        .details-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #95a5a6;
+            font-size: 0.95em;
+            color: #2c3e50;
+            background-color: #fff;
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .details-content ul, .details-content ol {
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        .details-content li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Сборник №2: Kafka, Архитектура, Java Core, Spring</h1>
+
+<!-- ================= KAFKA ================= -->
+<h2>Apache Kafka</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как связаны топики, партиции и консьюмеры? Что будет, если два консьюмера в разных группах, и что, если в одной?</p>
+    <p class="answer"><strong>Ответ:</strong> Если консьюмеры в <b>разных группах</b>, каждый из них прочитает все сообщения из всех партиций топика. Если они в <b>одной группе</b>, они разделят партиции между собой (один консьюмер — одна или несколько партиций).</p>
+    <details>
+        <summary>📖 Подробнее про Consumer Groups</summary>
+        <div class="details-content">
+            <p>Топик делится на партиции для параллелизма. Внутри одной Consumer Group сообщение из конкретной партиции достанется <strong>только одному</strong> консьюмеру. Это гарантирует, что сообщения не будут обработаны дважды внутри одной группы.</p>
+            <p>Если консьюмеров в группе больше, чем партиций, лишние консьюмеры будут простаивать (idle). Если один консьюмер упадет, произойдет rebalancing, и его партиции перейдут к живым собратьям.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как сделать так, чтобы сообщения одного и того же пользователя всегда читал один и тот же консьюмер?</p>
+    <p class="answer"><strong>Ответ:</strong> Нужно использовать <b>Message Key</b> при отправке сообщения. Kafka вычисляет хэш от ключа и на его основе определяет партицию.</p>
+    <details>
+        <summary>📖 Как работает партиционирование по ключу</summary>
+        <div class="details-content">
+            <p>Формула: <code>hash(key) % number_of_partitions</code>. Если вы передаете в качестве ключа <code>userId</code>, то все события для этого пользователя всегда будут попадать строго в одну партицию. Так как партицию читает только один консьюмер из группы, порядок обработки сообщений для конкретного пользователя будет соблюден.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как в Kafka хранятся сообщения и как они удаляются?</p>
+    <p class="answer"><strong>Ответ:</strong> Сообщения хранятся на диске в виде логов. Они удаляются автоматически с помощью политик ретеншна (Retention) по времени или по размеру.</p>
+    <details>
+        <summary>📖 Политики очистки (Retention)</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>По времени (<code>retention.ms</code>):</strong> По умолчанию 7 дней. Сообщения старше этого срока удаляются.</li>
+                <li><strong>По размеру (<code>retention.bytes</code>):</strong> Если размер партиции превышает лимит, старые сегменты удаляются.</li>
+                <li>Удаление происходит сегментами (файлами), а не по одному сообщению.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Можно ли удалить конкретное сообщение точечно? Или как работает механизм обновления данных?</p>
+    <p class="answer"><strong>Ответ:</strong> Точечно удалить сообщение нельзя. Но есть механизм <b>Log Compaction (Компакция логов)</b>. Он оставляет только последнее сообщение для каждого ключа.</p>
+    <details>
+        <summary>📖 Что такое Log Compaction</summary>
+        <div class="details-content">
+            <p>Если настроить <code>cleanup.policy=compact</code>, Kafka будет работать как key-value хранилище. Если пришло 10 обновлений для <code>key=user_1</code>, Kafka оставит только 10-е (самое свежее) сообщение, а старые фоново удалит. Это идеально подходит для хранения состояния (Event Sourcing, кэши).</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= МИКРОСЕРВИСЫ И БАЗЫ ДАННЫХ ================= -->
+<h2>Микросервисы и БД</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Есть два инстанса микросервиса и общий кэш. Как сделать, чтобы в один момент времени с кэшем работал только один инстанс?</p>
+    <p class="answer"><strong>Ответ:</strong> Использовать паттерн распределенной блокировки (Distributed Lock) или библиотеку ShedLock (если это Scheduled задачи).</p>
+    <details>
+        <summary>📖 Как это работает</summary>
+        <div class="details-content">
+            <p>Для Spring Boot отлично подходит <strong>ShedLock</strong>. Он использует общую БД (или Redis) для хранения блокировки. Когда инстанс хочет выполнить задачу, он пытается обновить запись в таблице <code>shedlock</code>. Если запись заблокирована другим инстансом, текущий пропускает выполнение. Другие варианты: Redis (SETNX), ZooKeeper, Consul.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Нужно переименовать колонку в большой работающей таблице БД без даунтайма. В чем проблема и как это сделать?</p>
+    <p class="answer"><strong>Ответ:</strong> Прямой <code>ALTER TABLE RENAME</code> может заблокировать таблицу. Правильный подход — паттерн <b>Expand and Contract (Расширение и Сжатие)</b>.</p>
+    <details>
+        <summary>📖 Пошаговый алгоритм безопасного переименования</summary>
+        <div class="details-content">
+            <ol>
+                <li><strong>Expand:</strong> Добавляем новую колонку (с новым именем).</li>
+                <li>Изменяем код приложения: пишем данные <i>в обе колонки</i> (старую и новую), а читаем пока из старой.</li>
+                <li>Запускаем фоновый процесс (миграцию), который переносит старые данные из старой колонки в новую.</li>
+                <li>Выпускаем релиз: начинаем читать из новой колонки.</li>
+                <li><strong>Contract:</strong> Следующим релизом удаляем старую колонку и перестаем в нее писать.</li>
+            </ol>
+            <p>Это позволяет избежать блокировок и простоя.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что произойдет, если два инстанса микросервиса одновременно попытаются накатить миграции (Flyway/Liquibase)?</p>
+    <p class="answer"><strong>Ответ:</strong> Ничего страшного не произойдет, так как инструменты миграции используют блокировки БД. Один инстанс захватит блок, а второй будет ждать или пропустит выполнение.</p>
+    <details>
+        <summary>📖 Механизм работы Flyway/Liquibase</summary>
+        <div class="details-content">
+            <p>В БД создается служебная таблица (например, <code>flyway_schema_history</code> или <code>databasechangeloglock</code>). Перед началом миграции инстанс ставит блокировку (lock) в этой таблице. Второй инстанс видит блокировку и ждет, пока первый не закончит.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= МОНИТОРИНГ И ДИАГНОСТИКА ================= -->
+<h2>Мониторинг и Инциденты</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как понять, что сервис работает медленно или упал? Как настраивал мониторинг?</p>
+    <p class="answer"><strong>Ответ:</strong> Используются связки Prometheus + Grafana для метрик и стек ELK/Loki для логов.</p>
+    <details>
+        <summary>📖 Инструменты мониторинга</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>Prometheus:</strong> Собирает метрики (CPU, память, RPS, время ответа).</li>
+                <li><strong>Grafana:</strong> Строит дашборды и визуализирует.</li>
+                <li><strong>Alertmanager:</strong> Отправляет алерты в Telegram/Slack, если метрика вышла за пороги.</li>
+                <li><strong>Логи:</strong> Loki или Kibana для поиска ошибок по Correlation ID.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Сервис сильно тормозит, потребление CPU под 100%. Как будешь диагностировать?</p>
+    <p class="answer"><strong>Ответ:</strong> Нужно снять дамп потоков (Thread Dump) и использовать профайлер (например, VisualVM, JProfiler или async-profiler).</p>
+    <details>
+        <summary>📖 Как найти узкое место в коде</summary>
+        <div class="details-content">
+            <p>Профайлер покажет, какой именно метод съедает больше всего CPU (Hot Methods). Часто причина — тяжелый SQL-запрос в цикле (N+1), бесконечный цикл, сложные регулярные выражения или неэффективная сериализация JSON.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= JAVA CORE (COLLECTIONS & STREAMS) ================= -->
+<h2>Java Core</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как устроена HashMap? Как определяется бакет?</p>
+    <p class="answer"><strong>Ответ:</strong> На основе массива бакетов. Индекс вычисляется через хэш ключа: <code>(n - 1) & hash</code>.</p>
+    <details>
+        <summary>📖 Подробнее про коллизии и бакеты</summary>
+        <div class="details-content">
+            <p>Если хэши разные, но индекс совпал (коллизия), элементы связываются в LinkedList. В Java 8, если длина списка превышает 8, он превращается в красно-черное дерево (Treeify) для ускорения поиска до O(log n).</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что будет, если переопределить hashCode() так, чтобы он всегда возвращал константу (например, 1)?</p>
+    <p class="answer"><strong>Ответ:</strong> Все элементы попадут в один бакет. HashMap деградирует в LinkedList (или дерево). Производительность операций get/put упадет с O(1) до O(n) или O(log n).</p>
+    <details>
+        <summary>📖 Почему это плохо</summary>
+        <div class="details-content">
+            <p>HashMap потеряет свой главный смысл — быстрое распределение элементов. Поиск будет требовать перебора всех элементов в единственном бакете.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Чем дженерики лучше, чем использование Object везде?</p>
+    <p class="answer"><strong>Ответ:</strong> Безопасность типов на этапе компиляции. Мы не получим <code>ClassCastException</code> в рантайме и избавляемся от ручных приведений типов.</p>
+    <details>
+        <summary>📖 Type Erasure</summary>
+        <div class="details-content">
+            <p>В Java дженерики существуют только на этапе компиляции (Type Erasure). В байткоде они стираются до Object, но компилятор строго проверяет типы, не давая положить String в список <code>List&lt;Integer&gt;</code>.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: На какие две группы делятся методы Stream API? Какие есть операторы?</p>
+    <p class="answer"><strong>Ответ:</strong> Промежуточные (Intermediate) и Терминальные (Terminal).</p>
+    <details>
+        <summary>📖 Промежуточные и Терминальные операции</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>Промежуточные (lazy):</strong> <code>filter</code>, <code>map</code>, <code>sorted</code>, <code>peek</code>, <code>flatMap</code>. Возвращают Stream.</li>
+                <li><strong>Терминальные:</strong> <code>collect</code>, <code>forEach</code>, <code>reduce</code>, <code>count</code>, <code>allMatch</code>, <code>anyMatch</code>. Запускают пайплайн и закрывают поток.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Какой пул потоков используется по умолчанию для parallelStream()?</p>
+    <p class="answer"><strong>Ответ:</strong> <code>ForkJoinPool.commonPool()</code>.</p>
+    <details>
+        <summary>📖 Нюансы работы commonPool</summary>
+        <div class="details-content">
+            <p>Размер пула равен <code>Runtime.getRuntime().availableProcessors() - 1</code>. Если вы блокируете потоки в commonPool (например, делаете сетевые запросы или JDBC-вызовы), это может привести к голоданию (starvation) всего приложения. Для I/O операций лучше создавать свой кастомный пул.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= SPRING ================= -->
+<h2>Spring Framework</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Есть два бина, реализующих один интерфейс. Как внедрить конкретный?</p>
+    <p class="answer"><strong>Ответ:</strong> Использовать аннотацию <code>@Qualifier("имяБина")</code> или пометить один из них <code>@Primary</code>.</p>
+    <details>
+        <summary>📖 Как Spring решает конфликты бинов</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>@Primary:</strong> Указывает дефолтный бин. Если внедряем без уточнений, внедрится он.</li>
+                <li><strong>@Qualifier:</strong> Явно указывает имя конкретного бина в точке внедрения.</li>
+                <li>Если ничего не указано и нет @Primary, Spring бросит <code>NoUniqueBeanDefinitionException</code>.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как обрабатываются аннотации Spring (@Autowired, @PostConstruct)? Что такое Bean Post-Processor?</p>
+    <p class="answer"><strong>Ответ:</strong> Аннотации обрабатываются <b>Bean Post-Processors</b> (BPP). Это механизм, который вмешивается в жизненный цикл бина до и после инициализации.</p>
+    <details>
+        <summary>📖 Почему это не делает Автоконфигурация?</summary>
+        <div class="details-content">
+            <p>Автоконфигурация создает сами бины. Но на этапе создания бина его поля еще пусты. BPP (например, <code>AutowiredAnnotationBeanPostProcessor</code>) перехватывает бин после конструктора, сканирует поля и методы через рефлексию, и только тогда внедряет зависимости (<code>@Autowired</code>).</p>
+            <p><code>CommonAnnotationBeanPostProcessor</code> отвечает за вызов метода <code>@PostConstruct</code> после того, как все зависимости внедрены.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= HIBERNATE / SQL ================= -->
+<h2>Hibernate / SQL</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что такое проблема N+1 и как ее решить?</p>
+    <p class="answer"><strong>Ответ:</strong> Проблема, при которой вместо 1 запроса к БД выполняется N+1 запросов из-за ленивой загрузки (LAZY) в Hibernate.</p>
+    <details>
+        <summary>📖 Как решать N+1</summary>
+        <div class="details-content">
+            <ul>
+                <li>Использовать <code>JOIN FETCH</code> в JPQL/HQL.</li>
+                <li>Использовать <code>@EntityGraph</code> над методом репозитория.</li>
+                <li>Использовать <code>@BatchSize</code> для загрузки связей пачками.</li>
+                <li>Использовать DTO-проекции, чтобы доставать только нужные поля.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как СУБД выбирает, использовать ли индекс? Что такое планировщик запросов?</p>
+    <p class="answer"><strong>Ответ:</strong> Планировщик (Query Planner) анализирует статистику данных и оценивает стоимость разных планов выполнения запроса (Cost-Based Optimizer).</p>
+    <details>
+        <summary>📖 Когда индекс не используется</summary>
+        <div class="details-content">
+            <p>Если запрос выбирает всю таблицу (<code>SELECT * FROM table</code>), индексы не нужны (Full Table Scan быстрее). Если селективность (избирательность) условия <code>WHERE</code> низкая (например, выбор 80% строк), планировщик может решить, что читать индекс и ходить в таблицу дольше, чем просто прочитать всю таблицу.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Какие нововведения появились в Java 14?</p>
+    <p class="answer"><strong>Ответ:</strong> Records, Pattern Matching for instanceof, Text Blocks, Helpful NullPointerExceptions.</p>
+    <details>
+        <summary>📖 Helpful NPE и Records</summary>
+        <div class="details-content">
+            <p>В Java 14 <code>NullPointerException</code> стал «умным»: он пишет в стектрейсе точную переменную/метод, из-за которого произошло NPE (например, <code>Cannot invoke "String.length()" because "user.name" is null</code>).</p>
+            <p>Также появились <code>record</code> (пока в preview), которые генерируют конструктор, геттеры, equals и hashCode автоматически.</p>
+        </div>
+    </details>
+</div>
+
+</body>
+</html>
