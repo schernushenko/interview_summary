@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Сборник №3: Java Core, БД, Spring, Микросервисы (Глубокое погружение)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f7f6;
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 3px solid #8e44ad;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #8e44ad;
+            margin-top: 40px;
+            border-bottom: 2px solid #bdc3c7;
+            padding-bottom: 5px;
+        }
+        .qa-block {
+            background: #fff;
+            border-left: 4px solid #8e44ad;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border-radius: 4px;
+            transition: box-shadow 0.3s ease;
+        }
+        .qa-block:hover {
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .qa-block p {
+            margin: 8px 0;
+        }
+        .question {
+            font-weight: bold;
+            color: #d35400;
+            font-size: 1.05em;
+        }
+        .answer {
+            color: #34495e;
+            margin-bottom: 15px;
+        }
+        code {
+            background-color: #f1f1f1;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+            color: #c0392b;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        pre code {
+            background-color: transparent;
+            color: #f8f8f2;
+            padding: 0;
+        }
+
+        /* Стили для раскрывающихся блоков */
+        details {
+            background-color: #fdfefe;
+            border: 1px solid #d5dbdb;
+            border-radius: 5px;
+            padding: 10px 15px;
+            margin-top: 10px;
+        }
+        summary {
+            cursor: pointer;
+            font-weight: bold;
+            color: #8e44ad;
+            outline: none;
+            user-select: none;
+            transition: color 0.2s;
+            font-size: 0.95em;
+        }
+        summary:hover {
+            color: #5e3370;
+        }
+        .details-content {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #bdc3c7;
+            font-size: 0.95em;
+            color: #2c3e50;
+        }
+        .details-content ul, .details-content ol {
+            margin-top: 5px;
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        .details-content li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<h1>Сборник №3: Глубокое погружение (Java, Spring, БД, Архитектура)</h1>
+
+<!-- ================= JAVA CORE & JVM ================= -->
+<h2>Java Core и JVM</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Почему в Java нет множественного наследования классов и как это обойти?</p>
+    <p class="answer"><strong>Ответ:</strong> Множественное наследование классов запрещено, чтобы избежать «Проблемы ромба» (Diamond Problem), когда неясно, чью реализацию метода наследовать, если два родителя имеют одинаковый метод. Вместо этого используют множественное наследование интерфейсов или <strong>композицию</strong>.</p>
+    <details>
+        <summary>📖 Как работает композиция и интерфейсы</summary>
+        <div class="details-content">
+            <p><strong>Интерфейсы:</strong> Класс может реализовать сколько угодно интерфейсов. Если методы интерфейсов конфликтуют (default методы), разработчик обязан явно переопределить метод и указать, какой из них вызывать через <code>InterfaceName.super.method()</code>.</p>
+            <p><strong>Композиция:</strong> Вместо наследования от двух классов, класс хранит в себе экземпляры других классов (делегирование). Это часто даже гибче, чем наследование.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Где хранятся объекты и примитивы в памяти? Всегда ли объекты создаются в куче (Heap)?</p>
+    <p class="answer"><strong>Ответ:</strong> Примитивы (локальные) и ссылки на объекты хранятся в стеке (Stack). Сами объекты — в куче (Heap). Но благодаря <strong>Escape Analysis</strong> в JIT-компиляторе, объекты, которые не «убегают» за пределы метода, могут создаваться прямо в стеке.</p>
+    <details>
+        <summary>📖 Escape Analysis и Scalar Replacement</summary>
+        <div class="details-content">
+            <p>Если JIT-компилятор видит, что объект используется только внутри одного метода (не возвращается и не передается наружу), он может применить оптимизацию <strong>Scalar Replacement</strong>: разбить объект на отдельные примитивные поля и положить их в стек или регистры процессора. Это снижает нагрузку на Garbage Collector.</p>
+            <p><em>Пример:</em> Создание <code>StringBuilder</code> внутри цикла или метода.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Чем отличается `volatile` от `AtomicInteger`? Почему `volatile int` не подходит для счетчика?</p>
+    <p class="answer"><strong>Ответ:</strong> <code>volatile</code> гарантирует видимость изменений (happens-before), но <strong>не гарантирует атомарность</strong>. Операция <code>i++</code> состоит из трех шагов (чтение, сложение, запись), во время которых другой поток может вклиниться. <code>AtomicInteger</code> использует CAS (Compare-And-Swap) для обеспечения атомарности без блокировок.</p>
+    <details>
+        <summary>📖 Контракт Happens-Before</summary>
+        <div class="details-content">
+            <p>Запись в <code>volatile</code> переменную происходит-до (happens-before) любого последующего чтения этой переменной. Это значит, что все изменения других переменных, сделанные потоком А до записи в <code>volatile</code>, будут видны потоку Б после чтения из <code>volatile</code>.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Можно ли словить Deadlock без использования synchronized или Lock?</p>
+    <p class="answer"><strong>Ответ:</strong> Да, если рассматривать блокировки не только как мониторы объектов, но и как ожидание ресурсов. Например, пул потоков и блокирующие очереди.</p>
+    <details>
+        <summary>📖 Пример Deadlock без явных блокировок</summary>
+        <div class="details-content">
+            <p>Если у вас есть <code>ThreadPoolExecutor</code> с фиксированным размером (например, 1 поток), и задача внутри этого пула отправляет другую задачу в этот же пул и вызывает <code>future.get()</code>. Первая задача заблокируется в ожидании второй, но вторая никогда не запустится, так как единственный поток занят первой.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что такое виртуальные (зеленые) потоки (Virtual Threads) в Java и какую проблему они решают?</p>
+    <p class="answer"><strong>Ответ:</strong> Это легковесные потоки, которые управляются JVM, а не ОС. Они занимают физический поток ОС только тогда, когда выполняют вычисления (CPU-bound). Если виртуальный поток блокируется (I/O), JVM «паркует» его и отдает поток ОС другому виртуальному потоку.</p>
+    <details>
+        <summary>📖 Проблема платформенных потоков</summary>
+        <div class="details-content">
+            <p>Обычный поток (Platform Thread) 1:1 привязан к потоку ОС и стоит ~1 МБ памяти. Мы не можем создать их миллионы. Виртуальный поток стоит пару килобайт. Это позволяет писать блокирующий код (как привыкли), но масштабировать его до миллионов одновременных соединений.</p>
+            <p><em>Ограничение:</em> Виртуальные потоки не помогут для CPU-bound задач (расчеты), так как им все равно нужен поток ОС для вычислений.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Какие сборщики мусора (GC) вы знаете? В чем разница между G1, ZGC и Serial/Parallel?</p>
+    <p class="answer"><strong>Ответ:</strong>
+        <br>• <b>Serial/Parallel</b> — старые сборщики, ориентированы на пропускную способность (Throughput), но имеют длительные паузы (Stop-the-World).
+        <br>• <b>G1 (Garbage-First)</b> — дефолтный в современных версиях Java. Делит кучу на регионы, балансирует между паузами и пропускной способностью.
+        <br>• <b>ZGC / Shenandoah</b> — низколатентные сборщики. Паузы менее 1-10 мс, не зависят от размера кучи.</p>
+    <details>
+        <summary>📖 Поколения в GC</summary>
+        <div class="details-content">
+            <p>Большинство сборщиков делят кучу на <strong>Young Generation</strong> (Eden + два Survivor) и <b>Old Generation</b> (Tenured). Новые объекты создаются в Eden. Если объект переживает сборку мусора (Minor GC), он переходит в Survivor, а затем, после нескольких выживаний, в Old. В Old (Major GC) сборка происходит реже, так как там лежат долгоживущие объекты.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= КОЛЛЕКЦИИ И STREAM API ================= -->
+<h2>Коллекции и Stream API</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что произойдет, если переопределить `hashCode()` так, чтобы он всегда возвращал константу?</p>
+    <p class="answer"><strong>Ответ:</strong> Все элементы попадут в один бакет в <code>HashMap</code>. Это приведет к вырождению хэш-таблицы в связный список (или дерево), и время поиска/вставки упадет с O(1) до O(n) или O(log n).</p>
+    <details>
+        <summary>📖 Контракт equals и hashCode</summary>
+        <div class="details-content">
+            <p>Если объекты равны по <code>equals()</code>, их хэш-коды <strong>обязаны</strong> быть равны. Если вы переопределяете одно, обязательно переопределяйте и другое на основе одних и тех же полей.</p>
+            <p><em>Опасность:</em> Если использовать мутабельный объект (например, <code>@Data</code> от Lombok) как ключ в <code>HashMap</code>, и после добавления изменить его поля, хэш-код изменится. Вы больше не сможете найти этот объект в мапе (он «потеряется»).</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: В чем разница между промежуточными (intermediate) и терминальными (terminal) операторами Stream?</p>
+    <p class="answer"><strong>Ответ:</strong> Промежуточные (filter, map, peek) возвращают Stream, они ленивые. Терминальные (collect, forEach, reduce) запускают выполнение и закрывают поток. В цепочке может быть много промежуточных, но только одна терминальная операция.</p>
+    <details>
+        <summary>📖 Stateless vs Stateful операции</summary>
+        <div class="details-content">
+            <p><strong>Stateless (без состояния):</strong> <code>map</code>, <code>filter</code>. Обрабатывают каждый элемент независимо.</p>
+            <p><strong>Stateful (с сохранением состояния):</strong> <code>sorted</code>, <code>distinct</code>, <code>limit</code>, <code>skip</code>. Им нужно буферизировать данные или запоминать предыдущие элементы, чтобы выполнить операцию. Они требуют больше памяти и хуже работают в параллельных стримах.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Какой пул потоков использует `parallelStream()` по умолчанию и какие у него подводные камни?</p>
+    <p class="answer"><strong>Ответ:</strong> <code>ForkJoinPool.commonPool()</code>. По умолчанию в нем <code>availableProcessors() - 1</code> потоков. Главная опасность: если все потоки пула заблокируются (например, на I/O или ожидании БД), весь `commonPool` в приложении встанет.</p>
+    <details>
+        <summary>📖 Как работать с parallelStream правильно</summary>
+        <div class="details-content">
+            <ul>
+                <li>Использовать только для CPU-bound задач (тяжелые вычисления, сортировка больших массивов).</li>
+                <li>Не использовать для I/O операций (сеть, файлы, БД).</li>
+                <li>Для I/O операций лучше создать кастомный пул: <code>new ForkJoinPool(10)</code> и запускать стрим внутри него через <code>submit()</code>.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<!-- ================= SPRING FRAMEWORK ================= -->
+<h2>Spring Framework</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: В чем разница между `@Service` и `@Component`?</p>
+    <p class="answer"><strong>Ответ:</strong> Функционально для Spring-контейнера они абсолютно идентичны. Но `@Service` семантически указывает, что класс содержит бизнес-логику (сервисный слой), а `@Component` — это просто общий компонент. Это помогает разработчикам понимать архитектуру.</p>
+    <details>
+        <summary>📖 Иерархия стереотипов</summary>
+        <div class="details-content">
+            <p><code>@Component</code> — корневая аннотация. <code>@Service</code>, <code>@Repository</code>, <code>@Controller</code> — это специализации <code>@Component</code>.</p>
+            <p>Например, у <code>@Repository</code> есть дополнительная логика: Spring автоматически транслирует нативные SQL-исключения (например, из JDBC) в удобную иерархию <code>DataAccessException</code>.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как будет работать `@Transactional` на методе, который вызывается из `@PostConstruct`?</p>
+    <p class="answer"><strong>Ответ:</strong> Транзакция <strong>не откроется</strong>. <code>@PostConstruct</code> вызывается на этапе инициализации бина, когда прокси-объект еще не создан (или не завернул в себя целевой бин). Вызов идет напрямую на оригинальный объект, минуя AOP-прокси.</p>
+    <details>
+        <summary>📖 Почему это не работает</summary>
+        <div class="details-content">
+            <p>Жизненный цикл Spring: создание -> DI -> <code>@PostConstruct</code> -> <code>BeanPostProcessor.postProcessAfterInitialization</code> (где и создается прокси для транзакций).</p>
+            <p>Следовательно, внутри <code>@PostConstruct</code> вы работаете с сырым объектом (target). Чтобы выполнить транзакционную логику при старте, лучше использовать <code>ApplicationListener&lt;ContextRefreshedEvent&gt;</code> или <code>CommandLineRunner</code>.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Какие библиотеки использует Spring для создания прокси? В чем разница между JDK Dynamic Proxy и CGLIB?</p>
+    <p class="answer"><strong>Ответ:</strong>
+        <br>• <b>JDK Dynamic Proxy</b> — работает только с интерфейсами. Создает класс, реализующий интерфейсы целевого бина. Быстрее в создании.
+        <br>• <b>CGLIB</b> — работает с классами (создает подкласс). Не требует интерфейсов, но не может проксировать <code>final</code> классы и <code>final</code> методы.</p>
+    <details>
+        <summary>📖 Как Spring выбирает прокси</summary>
+        <div class="details-content">
+            <p>Если у бина есть интерфейс, Spring по умолчанию использует JDK Dynamic Proxy. Если интерфейса нет — CGLIB. В Spring Boot 2.x+ <strong>CGLIB используется по умолчанию</strong> всегда, чтобы избежать проблем с инъекцией по конкретному классу (а не интерфейсу). Управляется свойством <code>spring.aop.proxy-target-class</code>.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как написать аспект (AOP) для логирования времени выполнения метода, помеченного аннотацией?</p>
+    <p class="answer"><strong>Ответ:</strong> Нужно создать аспект (<code>@Aspect</code>) и задать срез (<code>@Around</code>), который указывает на аннотацию.</p>
+    <details>
+        <summary>📖 Пример кода</summary>
+        <div class="details-content">
+<pre><code>@Aspect
+@Component
+public class LoggingAspect {
+    @Around("@annotation(com.example.LogExecutionTime)")
+    public Object logTime(ProceedingJoinPoint joinPoint) throws Throwable {
+        long start = System.currentTimeMillis();
+        try {
+            return joinPoint.proceed(); // вызов оригинального метода
+        } finally {
+            long time = System.currentTimeMillis() - start;
+            System.out.println(joinPoint.getSignature() + " executed in " + time + "ms");
+        }
+    }
+}</code></pre>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как решить проблему циклических зависимостей в Spring?</p>
+    <p class="answer"><strong>Ответ:</strong> Лучший способ — рефакторинг архитектуры (вынести общую логику в третий бин). Если это невозможно, можно использовать аннотацию `@Lazy` на одном из полей.</p>
+    <details>
+        <summary>📖 Как Spring решает циклические зависимости</summary>
+        <div class="details-content">
+            <p>До Spring Boot 2.6 включительно Spring мог разрешать циклические зависимости (через setter или field injection), используя трехуровневый кэш бинов. Начиная со Spring Boot 2.6, циклические зависимости <strong>запрещены по умолчанию</strong>, и приложение упадет с ошибкой. Если нужно разрешить: <code>spring.main.allow-circular-references=true</code>, но лучше этого избегать.</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= БАЗЫ ДАННЫХ И SQL ================= -->
+<h2>Базы данных и SQL</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Как создаются индексы в БД и по каким полям их лучше делать? Что если колонка содержит много `NULL`?</p>
+    <p class="answer"><strong>Ответ:</strong> Индексы создаются по полям с <strong>высокой селективностью</strong> (те, что часто используются в WHERE, JOIN, ORDER BY и дают мало одинаковых значений). Если колонка содержит 50% `NULL`, обычный B-Tree индекс будет неэффективен. Нужно использовать <strong>частичный (partial) индекс</strong>.</p>
+    <details>
+        <summary>📖 Частичные индексы (PostgreSQL)</summary>
+        <div class="details-content">
+            <p>Если вы часто ищете <code>WHERE status = 'ACTIVE'</code> (а остальные записи, например, 'DELETED'), создайте индекс только для активных:</p>
+            <p><code>CREATE INDEX idx_active_users ON users(id) WHERE status = 'ACTIVE';</code></p>
+            <p>Такой индекс будет занимать мало места, и Postgres будет использовать его только для нужных запросов. Если вы ищете <code>IS NULL</code>, Postgres может создать специальный индекс: <code>CREATE INDEX idx_null ON table(col) WHERE col IS NULL;</code></p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: В чем разница между `EXPLAIN` и `EXPLAIN ANALYZE`?</p>
+    <p class="answer"><strong>Ответ:</strong> `EXPLAIN` показывает <em>теоретический</em> план запроса (как оптимизатор предполагает его выполнять). `EXPLAIN ANALYZE` <em>фактически выполняет</em> запрос и показывает реальное время выполнения и количество строк.</p>
+    <details>
+        <summary>📖 Как читать EXPLAIN</summary>
+        <div class="details-content">
+            <p>Обращайте внимание на:</p>
+            <ul>
+                <li><strong>Seq Scan / Full Scan</strong> — плохо, читается вся таблица.</li>
+                <li><strong>Index Scan / Index Only Scan</strong> — хорошо, используется индекс.</li>
+                <li><strong>Cost (стоимость)</strong> — абстрактные единицы. Формат <code>0.00..10.00</code>: первое число — стоимость получения первой строки, второе — общая стоимость.</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: В чем разница между `COUNT(*)`, `COUNT(column)` и `COUNT(DISTINCT column)`?</p>
+    <p class="answer"><strong>Ответ:</strong>
+        <br>• <code>COUNT(*)</code> — считает все строки (включая строки с NULL).
+        <br>• <code>COUNT(column)</code> — считает только строки, где колонка НЕ NULL.
+        <br>• <code>COUNT(DISTINCT column)</code> — считает уникальные не-NULL значения.</p>
+    <details>
+        <summary>📖 Производительность COUNT</summary>
+        <div class="details-content">
+            <p><code>COUNT(*)</code> в InnoDB (MySQL) и PostgreSQL требует прохода по таблице или индексу, так как точное число строк не хранится в метаданных (из-за MVCC). <code>COUNT(column)</code> может использовать индекс этой колонки, если он есть.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что такое WAL (Write-Ahead Log) и как он обеспечивает Durability?</p>
+    <p class="answer"><strong>Ответ:</strong> WAL — это журнал транзакций. Прежде чем изменить данные на диске (в файлах таблиц), СУБД записывает информацию об изменении в WAL. Если сервер упадет до записи в основные файлы, при перезапуске СУБД прочитает WAL и восстановит (roll-forward) незавершенные изменения.</p>
+    <details>
+        <summary>📖 Что именно пишется в WAL</summary>
+        <div class="details-content">
+            <p>В WAL пишется не сам SQL-запрос, а <strong>результат</strong> изменения: «в таблицу X, страница Y, вставлено значение Z». WAL пишется последовательно (append-only), что на диске работает значительно быстрее, чем случайная запись в таблицы.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Offset пагинация vs Keyset (Cursor) пагинация. В чем разница и какую использовать?</p>
+    <p class="answer"><strong>Ответ:</strong> <code>OFFSET 100000 LIMIT 10</code> заставляет базу прочитать 100000 строк и выбросить их, что очень медленно. <strong>Keyset пагинация</strong> использует условие <code>WHERE id > last_seen_id LIMIT 10</code> и работает мгновенно даже на миллионах записей.</p>
+    <details>
+        <summary>📖 Проблема UUID как первичного ключа</summary>
+        <div class="details-content">
+            <p>Использование UUID (v4) в качестве PK плохо сказывается на производительности, так как они случайны. Вставка новой записи в B-Tree индекс происходит в случайное место (фрагментация), а не в конец (как с автоинкрементным <code>BIGINT</code>). Решение: использовать UUID v7 (включает время в начало) или генерировать ключи в приложении (Snowflake ID).</p>
+        </div>
+    </details>
+</div>
+
+<!-- ================= МИКРОСЕРВИСЫ И АРХИТЕКТУРА ================= -->
+<h2>Микросервисы и Архитектура</h2>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Паттерн SAGA vs Двухфазный коммит (2PC). В чем разница и что использовать?</p>
+    <p class="answer"><strong>Ответ:</strong> 2PC блокирует ресурсы всех участников до завершения транзакции, что плохо масштабируется и создает единую точку отказа. <strong>SAGA</strong> — это последовательность локальных транзакций. При сбое на любом шаге выполняются <em>компенсирующие транзакции</em> в обратном порядке.</p>
+    <details>
+        <summary>📖 Оркестрация vs Хореография в SAGA</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>Хореография:</strong> Микросервисы общаются через события (Kafka). Нет центрального управляющего. (Децентрализованно, но сложно отследить общий статус).</li>
+                <li><strong>Оркестрация:</strong> Есть отдельный сервис-оркестратор, который командует всеми остальными (говорит: «сделай это», «откати то»). (Легче управлять бизнес-процессом, но оркестратор становится узким местом).</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Растет Consumer Lag в Kafka. Что будешь делать?</p>
+    <p class="answer"><strong>Ответ:</strong> Consumer Lag — это разница между последним сообщением в партиции и последним прочитанным. Если он растет, консьюмер не успевает обрабатывать.</p>
+    <details>
+        <summary>📖 Как решать проблему отставания</summary>
+        <div class="details-content">
+            <ul>
+                <li><strong>Увеличить количество консьюмеров:</strong> Но не больше, чем количество партиций в топике.</li>
+                <li><strong>Увеличить количество партиций:</strong> Позволит добавить больше консьюмеров. (Но нельзя уменьшать партиции!).</li>
+                <li><strong>Оптимизировать код обработки:</strong> Может быть, консьюмер делает тяжелые синхронные вызовы БД. Можно батчить записи в БД.</li>
+                <li><strong>Увеличить batch.size:</strong> Забирать больше сообщений за один poll().</li>
+            </ul>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Зачем в Kafka нужен timestamp сообщения?</p>
+    <p class="answer"><strong>Ответ:</strong> Timestamp используется для очистки сегментов (Retention policy) по времени. А также для Stream API (Kafka Streams), чтобы обрабатывать события по времени (окна), и для получения сообщения по времени (offsetsForTimes).</p>
+    <details>
+        <summary>📖 Время создания vs Время записи</summary>
+        <div class="details-content">
+            <p>Kafka хранит два времени: <code>CreateTime</code> (когда продюсер создал сообщение) и <code>LogAppendTime</code> (когда брокер записал его). Выбор настраивается на уровне топика.</p>
+        </div>
+    </details>
+</div>
+
+<div class="qa-block">
+    <p class="question">Вопрос: Что такое метод GET с телом (body) в HTTP и почему его не стоит использовать?</p>
+    <p class="answer"><strong>Ответ:</strong> По спецификации HTTP (RFC 7231), GET-запрос не должен иметь тела, так как GET подразумевает только извлечение данных, а не отправку. Хотя технически многие серверы и клиенты позволяют это, некоторые балансировщики, прокси или сервера (например, Nginx, Tomcat) могут просто отбросить тело GET-запроса, и вы получите ошибку.</p>
+    <details>
+        <summary>📖 Почему это плохая практика</summary>
+        <div class="details-content">
+            <p>Кэши (CDN, браузеры) кэшируют GET-запросы. Если они не учитывают тело запроса, они могут вернуть неверный кэш. Для сложных поисковых запросов, требующих тела, обычно используют <code>POST /search</code> или кодируют параметры в URL (Query Params).</p>
+        </div>
+    </details>
+</div>
+
+</body>
+</html>
